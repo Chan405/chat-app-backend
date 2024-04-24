@@ -1,17 +1,39 @@
 const jwt = require("jsonwebtoken");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
+const fs = require("fs");
+
+// Create a transporter using SMTP
+const transporter = nodemailer.createTransport({
+  service: "Gmail",
+  auth: {
+    user: "ayenyeinchanmoe0@gmail.com", // Your email address
+    pass: "buuz yogf hbqh vsmz", // Your password for the email account
+  },
+});
+
+const htmlContent = fs.readFileSync("./controllers/emailTemplate.html", "utf8");
+
 const User = require("../models/userModel");
 
 const handleRegister = async (request, response) => {
   const { name, email, password } = request.body;
-  console.log(name, email, password);
 
   if (!name || !email || !password) {
     response
       .status(400)
       .json({ message: "Please add all the required fields" });
   }
+
+  // Email content
+  const mailOptions = {
+    from: "ayenyeinchanmoe0@gmail.com",
+    to: email,
+    subject: "Welcome to Channie App",
+    html: htmlContent,
+  };
+
   try {
     // check if user already exists
     const userExists = await User.findOne({ email });
@@ -31,6 +53,15 @@ const handleRegister = async (request, response) => {
         response
           .status(201)
           .json({ user: { name: user.name, email: user.email } });
+
+        // Send email
+        // transporter.sendMail(mailOptions, function (error, info) {
+        //   if (error) {
+        //     console.error("Error sending email:", error);
+        //   } else {
+        //     console.log("Email sent:", info.response);
+        //   }
+        // });
       } else {
         response.status(400).json({ message: "Invalid User" });
       }
