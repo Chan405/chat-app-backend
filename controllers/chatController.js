@@ -22,6 +22,45 @@ const createChat = async (request, response) => {
   }
 };
 
+const createChatV2 = async (request, response) => {
+  const { firstId, secondId, members, groupName } = request.body;
+
+  try {
+    // Check if it's an individual chat or a group chat
+    if (groupName) {
+      // Group chat
+      const existingGroupChat = await chatModel.findOne({
+        members: { $all: members },
+      });
+
+      if (existingGroupChat) {
+        return response.status(400).json({ message: "Group chat already exists with the same members" });
+      }
+
+      const newGroupChat = new chatModel({ members, groupName });
+      const savedGroupChat = await newGroupChat.save();
+      return response.status(201).json(savedGroupChat);
+    } else {
+      // Individual chat
+      // const existingChat = await chatModel.findOne({
+      //   members: { $all: [firstId, secondId] },
+      // });
+
+      // if (existingChat?.members?.length === 2) {
+      //   return response.status(200).json({existingChat, message: "Chat already exists"});
+      // }
+
+      const newChat = new chatModel({ members: [firstId, secondId] });
+      const savedChat = await newChat.save();
+      return response.status(201).json(savedChat);
+    }
+  } catch (error) {
+    console.error("Error creating chat:", error);
+    return response.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
 const getUserChats = async (request, response) => {
   const userId = request.params.userId;
 
@@ -53,4 +92,5 @@ module.exports = {
   createChat,
   getUserChats,
   getSingleChat,
+  createChatV2
 };
